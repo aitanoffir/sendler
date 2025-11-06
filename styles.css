@@ -530,10 +530,19 @@ h3 {
         font-size: 1.5em;
     }
 
+    .keyboard {
+        max-width: 500px;
+        width: 100%;
+    }
+
     .key {
         padding: 12px 8px;
         min-width: 35px;
         font-size: 0.8em;
+    }
+
+    .key:hover {
+        background: #ffffff00;
     }
 
     .key.key-large {
@@ -546,6 +555,7 @@ h3 {
     }
 
     .play-word-btn,
+    .share-word-btn,
     .delete-word-btn {
         width: 100%;
     }
