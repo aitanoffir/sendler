@@ -244,6 +244,23 @@ h3 {
     background: #3d5d8f;
 }
 
+.share-word-btn {
+    padding: 10px 20px;
+    background: #8FABD4;
+    color: #EFECE3;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1em;
+    transition: all 0.2s;
+}
+
+.share-word-btn:hover {
+    transform: scale(1.05);
+    background: #7a9bc4;
+}
+
 .delete-word-btn {
     padding: 10px 20px;
     background: #000000;
@@ -433,6 +450,64 @@ h3 {
     background: #f8d7da;
     color: #721c24;
     border: 2px solid #f5c6cb;
+}
+
+/* Share Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #EFECE3;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.modal-content p {
+    margin-bottom: 15px;
+    color: #000000;
+    text-align: center;
+}
+
+.share-link-input {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.9em;
+    border: 2px solid #8FABD4;
+    border-radius: 6px;
+    background: white;
+    color: #000000;
+    margin-bottom: 20px;
+    font-family: monospace;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.modal-buttons .action-btn,
+.modal-buttons .secondary-btn {
+    flex: 1;
 }
 
 /* Responsive Design */

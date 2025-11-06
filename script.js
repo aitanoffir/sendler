@@ -47,7 +47,35 @@ saveWordBtn.addEventListener('click', saveWord);
 wordInput.addEventListener('input', validateWordInput);
 
 // Initialize
-showModeSelection();
+checkForSharedWord();
+
+// Check for shared word in URL
+function checkForSharedWord() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('play')) {
+        const encodedData = urlParams.get('play');
+        try {
+            const decoded = JSON.parse(atob(encodedData));
+            // Validate decoded data
+            if (decoded.word && decoded.hint && typeof decoded.word === 'string' && typeof decoded.hint === 'string') {
+                const word = decoded.word.toUpperCase();
+                // Validate word format
+                if (word.length >= 4 && word.length <= 7 && /^[A-Z]+$/.test(word)) {
+                    // Hide mode selection and start game directly
+                    modeSelection.classList.add('hidden');
+                    playMode.classList.remove('hidden');
+                    startGame({ word, hint: decoded.hint });
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error('Invalid share link:', error);
+            alert('Invalid share link. Please check the URL and try again.');
+        }
+    }
+    // If no valid share link, show normal mode selection
+    showModeSelection();
+}
 
 // Navigation Functions
 function showModeSelection() {
@@ -121,10 +149,8 @@ function saveWord() {
     words.push({ word, hint, createdAt: new Date().toISOString() });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
 
-    // Show success and reset
-    alert('Word saved successfully!');
-    resetCreateForm();
-    showModeSelection();
+    // Show share modal
+    showShareModal({ word, hint });
 }
 
 function resetCreateForm() {
@@ -158,6 +184,7 @@ function loadWordsList() {
                 <span class="word-hint">${wordObj.hint}</span>
             </div>
             <button class="play-word-btn" data-index="${index}">Play</button>
+            <button class="share-word-btn" data-index="${index}">Share</button>
             <button class="delete-word-btn" data-index="${index}">Delete</button>
         `;
         wordsList.appendChild(wordCard);
@@ -168,6 +195,14 @@ function loadWordsList() {
         btn.addEventListener('click', (e) => {
             const index = parseInt(e.target.dataset.index);
             startGame(words[index]);
+        });
+    });
+
+    // Add event listeners to share buttons
+    document.querySelectorAll('.share-word-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.dataset.index);
+            showShareModal(words[index]);
         });
     });
 
@@ -407,4 +442,48 @@ function showMessage(text, type) {
         gameMessage.textContent = '';
         gameMessage.className = 'game-message';
     }, 3000);
+}
+
+// Share Modal Functions
+const shareModal = document.getElementById('share-modal');
+const shareLinkInput = document.getElementById('share-link');
+const copyLinkBtn = document.getElementById('copy-link-btn');
+const closeModalBtn = document.getElementById('close-modal-btn');
+
+copyLinkBtn.addEventListener('click', copyShareLink);
+closeModalBtn.addEventListener('click', closeShareModal);
+shareModal.addEventListener('click', (e) => {
+    if (e.target === shareModal) closeShareModal();
+});
+
+function showShareModal(wordObj) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const data = JSON.stringify({ word: wordObj.word, hint: wordObj.hint });
+    const encoded = btoa(data);
+    const shareUrl = `${baseUrl}?play=${encoded}`;
+
+    shareLinkInput.value = shareUrl;
+    shareModal.classList.remove('hidden');
+    shareLinkInput.select();
+}
+
+function closeShareModal() {
+    shareModal.classList.add('hidden');
+    resetCreateForm();
+    showModeSelection();
+}
+
+function copyShareLink() {
+    shareLinkInput.select();
+    shareLinkInput.setSelectionRange(0, 99999); // For mobile
+
+    try {
+        document.execCommand('copy');
+        copyLinkBtn.textContent = 'Copied!';
+        setTimeout(() => {
+            copyLinkBtn.textContent = 'Copy Link';
+        }, 2000);
+    } catch (err) {
+        alert('Failed to copy. Please copy manually.');
+    }
 }
