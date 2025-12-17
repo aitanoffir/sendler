@@ -512,6 +512,13 @@ function showShareModal(wordObj) {
     shareLinkInput.value = shareUrl;
     shareModal.classList.remove('hidden');
     shareLinkInput.select();
+
+    // Update button text based on capability
+    if (navigator.share) {
+        copyLinkBtn.textContent = 'Share Link';
+    } else {
+        copyLinkBtn.textContent = 'Copy Link';
+    }
 }
 
 function closeShareModal() {
@@ -520,17 +527,56 @@ function closeShareModal() {
     showModeSelection();
 }
 
-function copyShareLink() {
+async function copyShareLink() {
+    const shareUrl = shareLinkInput.value;
+    const shareData = {
+        title: 'Wordle Creator',
+        text: 'Can you guess my word?',
+        url: shareUrl
+    };
+
+    // 1. Try Web Share API (Mobile/Native)
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+            return; // Share sheet opened successfully
+        } catch (err) {
+            console.log('Share failed or cancelled:', err);
+            // Fallback to copy if share fails/cancelled (optional, but good UX)
+        }
+    }
+
+    // 2. Try Modern Clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            showCopySuccess();
+            return;
+        } catch (err) {
+            console.error('Clipboard API failed:', err);
+        }
+    }
+
+    // 3. Fallback to Legacy execCommand
     shareLinkInput.select();
     shareLinkInput.setSelectionRange(0, 99999); // For mobile
-
     try {
-        document.execCommand('copy');
-        copyLinkBtn.textContent = 'Copied!';
-        setTimeout(() => {
-            copyLinkBtn.textContent = 'Copy Link';
-        }, 2000);
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showCopySuccess();
+        } else {
+            alert('Failed to copy. Please copy the link manually.');
+        }
     } catch (err) {
-        alert('Failed to copy. Please copy manually.');
+        console.error('execCommand failed:', err);
+        alert('Failed to copy. Please copy the link manually.');
     }
+}
+
+function showCopySuccess() {
+    const originalText = copyLinkBtn.textContent;
+    copyLinkBtn.textContent = 'Copied!';
+    setTimeout(() => {
+        copyLinkBtn.textContent = originalText;
+    }, 2000);
 }
