@@ -8,6 +8,8 @@ let currentRow = 0;
 let currentGuess = '';
 let gameBoard = [];
 let gameOver = false;
+let validWords = new Set();
+let dictionaryLoaded = false;
 
 // DOM Elements
 const modeSelection = document.getElementById('mode-selection');
@@ -47,7 +49,34 @@ saveWordBtn.addEventListener('click', saveWord);
 wordInput.addEventListener('input', validateWordInput);
 
 // Initialize
-checkForSharedWord();
+init();
+
+async function init() {
+    await loadDictionary();
+    checkForSharedWord();
+}
+
+async function loadDictionary() {
+    try {
+        const response = await fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt');
+        const text = await response.text();
+        // The file is potentially large, but for modern broadband/devices ~4MB text is okay.
+        // It contains words separated by newlines \r\n or \n
+        const words = text.split(/\r?\n/);
+
+        words.forEach(word => {
+            const w = word.trim().toUpperCase();
+            if (w.length >= 4 && w.length <= 7) {
+                validWords.add(w);
+            }
+        });
+
+        dictionaryLoaded = true;
+        console.log('Dictionary loaded:', validWords.size, 'words');
+    } catch (error) {
+        console.error('Failed to load dictionary:', error);
+    }
+}
 
 // Check for shared word in URL
 function checkForSharedWord() {
@@ -141,6 +170,12 @@ function saveWord() {
     // Validate hint
     if (!hint) {
         hintError.textContent = 'Please enter a hint';
+        return;
+    }
+
+    // Validate against dictionary
+    if (dictionaryLoaded && !validWords.has(word)) {
+        wordError.textContent = 'Please enter a valid English word';
         return;
     }
 
@@ -361,6 +396,14 @@ function submitGuess() {
         return;
     }
 
+    // Validate guess against dictionary
+    if (dictionaryLoaded && !validWords.has(currentGuess)) {
+        showMessage('Not in word list', 'error');
+        gameBoardElement.classList.add('shake');
+        setTimeout(() => gameBoardElement.classList.remove('shake'), 500);
+        return;
+    }
+
     // Check guess
     checkGuess();
 
@@ -438,7 +481,11 @@ function updateKeyboard(letter, status) {
 function showMessage(text, type) {
     gameMessage.textContent = text;
     gameMessage.className = `game-message ${type}`;
-    setTimeout(() => {
+    // Clear any existing timeout
+    if (gameMessage.timeoutId) {
+        clearTimeout(gameMessage.timeoutId);
+    }
+    gameMessage.timeoutId = setTimeout(() => {
         gameMessage.textContent = '';
         gameMessage.className = 'game-message';
     }, 3000);
