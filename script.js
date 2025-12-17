@@ -79,12 +79,18 @@ async function loadDictionary() {
 }
 
 // Check for shared word in URL
+// Check for shared word in URL
 function checkForSharedWord() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('play')) {
         const encodedData = urlParams.get('play');
         try {
-            const decoded = JSON.parse(atob(encodedData));
+            // Decode base64 with unicode support (MDN recommended way)
+            const binaryString = atob(encodedData);
+            const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+            const decodedString = new TextDecoder().decode(bytes);
+
+            const decoded = JSON.parse(decodedString);
             // Validate decoded data
             if (decoded.word && decoded.hint && typeof decoded.word === 'string' && typeof decoded.hint === 'string') {
                 const word = decoded.word.toUpperCase();
@@ -506,7 +512,12 @@ shareModal.addEventListener('click', (e) => {
 function showShareModal(wordObj) {
     const baseUrl = window.location.origin + window.location.pathname;
     const data = JSON.stringify({ word: wordObj.word, hint: wordObj.hint });
-    const encoded = btoa(data);
+
+    // Encode with unicode support (MDN recommended way)
+    const bytes = new TextEncoder().encode(data);
+    const binaryString = Array.from(bytes, byte => String.fromCharCode(byte)).join('');
+    const encoded = btoa(binaryString);
+
     const shareUrl = `${baseUrl}?play=${encoded}`;
 
     shareLinkInput.value = shareUrl;
